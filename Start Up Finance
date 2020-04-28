@@ -1,0 +1,143 @@
+SELECT DISTINCT
+	ORDER_NAME = UAR_GET_CODE_DISPLAY(O.CATALOG_CD)
+	, O.catalog_cd
+	;, ACTION_PERFORMED = UAR_GET_CODE_DISPLAY(OA.ACTION_TYPE_CD)
+	;, DEPT_STATUS = UAR_GET_CODE_DISPLAY(oa.dept_status_cd)
+	;, ACTION_SEQUENCE = OA.action_sequence
+;	, COMM_TYPE = UAR_GET_CODE_DISPLAY(OA.COMMUNICATION_TYPE_CD)
+	, ORDER_ID = O.order_id
+	, DATE_TIME = format(O.ORIG_ORDER_DT_TM,"mm/dd/yyyy hh:mm:ss")
+;	, DSN = OD.oe_field_display_value
+;	, SCORE = OD3.oe_field_display_value
+;	, RFE_FREE_TEXT = OD2.oe_field_display_value
+;	, RFE_DCP = OD4.oe_field_display_value
+;	, ACK_REASON = OD5.oe_field_display_value
+;	, ACK_REASON_COMMENT = OD6.oe_field_display_value
+	, ORDER_PROVIDER_POS = UAR_GET_CODE_DISPLAY(P.POSITION_CD)
+	, ORDER_PROVIDER_NAME = P.name_full_formatted
+	, ACTION_POS = UAR_GET_CODE_DISPLAY (P2.position_cd)
+	, ACTION_NAME = P2.name_full_formatted
+	, CATALOG_TYPE = UAR_GET_CODE_DISPLAY(OC.CATALOG_TYPE_CD)
+	, ACTIVITY_SUBTYPE_DISP = UAR_GET_CODE_DISPLAY(OC.ACTIVITY_SUBTYPE_CD)
+;	, TRACKING_ACUITY = CE.RESULT_VAL
+;	, TRACKING_ACUITY_PERFORMED = format(ce.performed_dt_tm,"mm/dd/yyyy hh:mm:ss")
+;	, TRACKING_ACUITY_VALID_FROM = format(ce.valid_from_dt_tm,"mm/dd/yyyy hh:mm:ss")
+;	, POWERPLAN_NAME = PC.description
+;	, FIN = EA.ALIAS
+;	, PT_NAME = PER.name_full_formatted ;if patient name is needed
+	, ENCNTR_TYPE = UAR_GET_CODE_DISPLAY(E.ENCNTR_TYPE_CD)
+	, ENCNTR_TYPE_CLASS = UAR_GET_CODE_DISPLAY(E.ENCNTR_TYPE_CLASS_CD)
+	, ENCNTR_CLASS_DISP = UAR_GET_CODE_DISPLAY(E.ENCNTR_CLASS_CD)
+;	, LOC_FACILITY_DISP = UAR_GET_CODE_DISPLAY(E.LOC_FACILITY_CD)
+;	, LOC_BUILDING_DISP = UAR_GET_CODE_DISPLAY(E.LOC_BUILDING_CD)
+;	, LOC_NURSE_UNIT_DISP = UAR_GET_CODE_DISPLAY(E.LOC_NURSE_UNIT_CD)
+;	, MED_SERVICE_DISP = UAR_GET_CODE_DISPLAY(E.MED_SERVICE_CD)
+;	, ORR.ACCESSION
+;	, ORR.ACCESSION_ID
+	;, ORR_EXAM_STATUS_DISP = UAR_GET_CODE_DISPLAY(ORR.EXAM_STATUS_CD)
+	;, ORR.REPLACED_ORDER_ID
+	, E_FINANCIAL_CLASS_DISP = UAR_GET_CODE_DISPLAY(E.FINANCIAL_CLASS_CD)
+;	, EPR_HEALTH_PLAN = H.PLAN_NAME
+;	, EPR_FINANCIAL_CLASS = UAR_GET_CODE_DISPLAY(H.FINANCIAL_CLASS_CD)
+;	, PERSON_HEALTH_PLAN = H2.plan_name
+;	, PERSON_FINANCIAL_CLASS = UAR_GET_CODE_DISPLAY(H2.FINANCIAL_CLASS_CD)
+
+FROM
+	ORDERS   O
+	, ORDER_CATALOG   OC
+;	, ORDER_DETAIL   OD    ; DSN
+	, ORDER_ACTION   OA
+	, PRSNL   P
+	, ENCNTR_ALIAS   EA
+;	, PERSON   PER
+	, PRSNL   P2
+;	, ORDER_DETAIL   OD2   ; SCORE
+	, ENCOUNTER   E
+
+;	, ORDER_DETAIL   OD3   ; RFE_FREE_TEXT
+;	, CLINICAL_EVENT   CE
+;	, pathway_catalog   PC
+;	, ORDER_DETAIL   OD4   ; RFE_DCP
+;	, ORDER_DETAIL   OD5 ; ACK REASON
+;	, ORDER_DETAIL   OD6 ; ACK REASON COMMENT
+;	, ORDER_RADIOLOGY   ORR
+;	, HEALTH_PLAN   H	;EPR Health Plan
+;	, HEALTH_PLAN   H2	; PPR Health Plan
+;	, ENCNTR_PLAN_RELTN   EPR
+;	, PERSON_PLAN_RELTN   PPR
+PLAN O
+
+  WHERE O.orig_order_dt_tm BETWEEN CNVTDATETIME("01-JAN-2019 00:30:00.00") and CNVTDATETIME("31-DEC-2019 23:59:59.00")  
+;UPDATE ;DATES
+
+  JOIN OC WHERE O.catalog_cd = oc.catalog_cd
+    and OC.activity_subtype_cd in ;VERIFY ACTIVITY SUBTYPES
+    
+    (
+    value(uar_get_code_by("MEANING",5801,"MRI"))
+    , value(uar_get_code_by("MEANING",5801,"MR"))
+    , value(uar_get_code_by("MEANING",5801,"CT"))
+    , value(uar_get_code_by("MEANING",5801,"NM"))
+    , value(uar_get_code_by("MEANING",5801,"PT"))
+    , value(uar_get_code_by("MEANING",5801,"PET"))
+    , value(uar_get_code_by("MEANING",5801,"NUCMED"))
+    )  
+
+;  JOIN OD WHERE outerjoin(O.order_id) = od.order_id 
+;    and od.oe_field_id = outerjoin(1733113171) ;DSN
+    ;and od.oe_field_display_value = NULL ;ONLY BRING BACK MISSING DSN ;COMMENT OUT FOR ALL
+
+
+  JOIN OA WHERE O.order_id = oa.order_id 
+    and oa.action_type_cd in (
+     2534
+)
+  ;ORDER_ACTION ;COMMENT OUT FOR ALL
+
+  JOIN P WHERE OA.order_provider_id = p.person_id
+
+  JOIN EA WHERE outerjoin(O.originating_encntr_id) = EA.encntr_id
+  ;  and ea.encntr_alias_type_cd = outerjoin(1077) ;CLIENT FIN ID
+    ;and ea.alias = "zzzzzzzz" ;if searching by FIN
+
+;  JOIN PER WHERE O.person_id = PER.person_id
+
+  JOIN P2 WHERE oa.action_personnel_id = p2.person_id
+
+;  JOIN OD2 WHERE outerjoin (O.order_id) = od2.order_id
+;    and od2.oe_field_id = outerjoin(12683) ;RFE FREE TEXT
+
+  JOIN E WHERE  o.originating_encntr_id = E.encntr_id
+
+;  JOIN OD3 WHERE outerjoin (o.order_id) = OD3.order_id
+;    and od3.oe_field_id = outerjoin (1733113823) ;SCORE
+
+;  JOIN CE WHERE O.originating_encntr_id = ce.encntr_id
+;    and ce.event_cd = 3346954    ;Tracking Acuity Value
+;    and ce.performed_dt_tm between e.reg_dt_tm and o.orig_order_dt_tm
+
+;  JOIN PC WHERE outerjoin(O.pathway_catalog_id) = PC.pathway_catalog_id
+
+;  JOIN OD4 WHERE outerjoin(O.order_id) = OD4.order_id
+;    and OD4.oe_field_id = outerjoin(12684)  ;RFE_DCP
+
+;  JOIN OD5 WHERE outerjoin(O.order_id) = OD5.order_id
+;    and OD5.oe_field_id = outerjoin(1733113997)  ;ACK_REASON
+
+;  JOIN OD6 WHERE outerjoin(O.order_id) = OD6.order_id
+;    and OD6.oe_field_id = outerjoin(1733114179)  ;ACK_REASON_COMMENT
+
+;  JOIN ORR WHERE O.order_id = ORR.order_id
+  
+;  JOIN EPR where o.originating_encntr_id = epr.encntr_id
+  
+;  JOIN PPR where per.person_id = ppr.person_id
+
+;  JOIN H WHERE outerjoin(epr.health_plan_id) = H.health_plan_id
+
+;  JOIN H2 where ppr.health_plan_id = h2.health_plan_id
+
+ORDER BY
+	O.orig_order_dt_tm
+
+WITH MAXREC = 30000, NOCOUNTER, FORMAT, TIME = 600
