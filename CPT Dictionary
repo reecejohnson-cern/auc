@@ -1,0 +1,75 @@
+SELECT
+oc.catalog_cd
+, oc.description
+           , cdm_code = bim.key6
+           , cdm_desc = bim.key7
+           , cpt4_code = bim2.key6
+           , cpt4_desc = bim2.key7
+          
+FROM
+order_catalog oc
+, code_value   cv
+, dummyt d1
+           , bill_item bi
+           , bill_item_modifier bim
+           , dummyt d2
+           , bill_item bi2
+           , bill_item_modifier bim2
+            
+Plan oc
+where oc.catalog_type_cd = 2517.00 ;radiology catalog type
+and oc.activity_subtype_cd in 
+		(
+		value(uar_get_code_by("MEANING",5801,"MRI"))
+		, value(uar_get_code_by("MEANING",5801,"CT"))
+		, value(uar_get_code_by("MEANING",5801,"NUCMED"))
+		, value(uar_get_code_by("MEANING",5801,"PT"))
+		, value(uar_get_code_by("MEANING",5801,"MR"))
+		, value(uar_get_code_by("MEANING",5801,"NM"))
+		, value(uar_get_code_by("MEANING",5801,"PET"))
+		)   
+and oc.active_ind = 1
+ 
+join cv
+where cv.code_value = oc.catalog_cd
+ 
+join d1
+join bi
+where bi.ext_parent_reference_id = oc.catalog_cd
+  and bi.active_ind = 1
+  and bi.parent_qual_cd = 0
+  and bi.beg_effective_dt_tm <= cnvtdatetime(curdate,curtime3)
+  and bi.end_effective_dt_tm > cnvtdatetime(curdate,curtime3)
+join bim
+where bim.bill_item_id = bi.bill_item_id
+  and bim.bill_item_type_cd+0 = 3459.0 ;Bill code
+  and bim.key1_id in (
+    select cv.code_value 
+    from code_value cv 
+    where cv.code_set = 14002 
+      and cv.cdf_meaning = "CDM_SCHED" 
+      and cv.active_ind = 1
+  )
+  and bim.active_ind = 1
+  and bim.beg_effective_dt_tm <= cnvtdatetime(curdate,curtime3)
+  and bim.end_effective_dt_tm > cnvtdatetime(curdate,curtime3)
+join d2
+join bi2
+where bi2.ext_parent_reference_id = oc.catalog_cd
+  and bi2.ext_parent_contributor_cd = 3443.0 ;ORD CAT
+  and bi2.active_ind = 1
+  and bi2.beg_effective_dt_tm <= cnvtdatetime(curdate,curtime3)
+  and bi2.end_effective_dt_tm > cnvtdatetime(curdate,curtime3)
+join bim2
+where bim2.bill_item_id = bi2.bill_item_id
+  and bim2.key1_id in (
+    select cv2.code_value 
+    from code_value cv2 
+    where cv2.code_set = 14002 
+      and cv2.cdf_meaning = "CPT4"
+      and cv2.active_ind = 1
+  )
+  and bim2.active_ind = 1
+  and bim2.beg_effective_dt_tm <= cnvtdatetime(curdate,curtime3)
+  and bim2.end_effective_dt_tm > cnvtdatetime(curdate,curtime3)
+with nocounter, outerjoin=d1, outerjoin=d2, dontcare=bi, dontcare=bim, time = 60
