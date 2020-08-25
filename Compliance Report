@@ -1,0 +1,91 @@
+SELECT DISTINCT
+	O.catalog_cd
+	, ORDER_NAME = UAR_GET_CODE_DISPLAY(O.CATALOG_CD)
+	, ORDER_ID = O.order_id
+	, DATE_TIME = format(O.ORIG_ORDER_DT_TM,"mm/dd/yyyy hh:mm:ss")
+	, DSN = OD.oe_field_display_value
+	, SCORE = OD2.oe_field_display_value
+	, AUC_MOD = OD3.oe_field_display_value
+	, QCDSM_GCODE = OD4.oe_field_display_value
+	, ORDER_PROVIDER_POS = UAR_GET_CODE_DISPLAY(P.POSITION_CD)
+	, ORDER_PROVIDER_NAME = P.name_full_formatted
+	, ACTION_POS = UAR_GET_CODE_DISPLAY (P2.position_cd)
+	, ACTION_NAME = P2.name_full_formatted
+	, CATALOG_TYPE = UAR_GET_CODE_DISPLAY(OC.CATALOG_TYPE_CD)
+	, ACTIVITY_SUBTYPE_DISP = UAR_GET_CODE_DISPLAY(OC.ACTIVITY_SUBTYPE_CD)
+;	, FIN = EA.ALIAS
+;	, PT_NAME = PER.name_full_formatted ;if patient name is needed
+	, ENCNTR_TYPE = UAR_GET_CODE_DISPLAY(E.ENCNTR_TYPE_CD)
+	, ENCNTR_TYPE_CLASS = UAR_GET_CODE_DISPLAY(E.ENCNTR_TYPE_CLASS_CD)
+	, ENCNTR_CLASS_DISP = UAR_GET_CODE_DISPLAY(E.ENCNTR_CLASS_CD)
+;	, LOC_FACILITY_DISP = UAR_GET_CODE_DISPLAY(E.LOC_FACILITY_CD)
+;	, LOC_BUILDING_DISP = UAR_GET_CODE_DISPLAY(E.LOC_BUILDING_CD)
+;	, LOC_NURSE_UNIT_DISP = UAR_GET_CODE_DISPLAY(E.LOC_NURSE_UNIT_CD)
+
+FROM
+	ORDERS   O
+	, ORDER_CATALOG   OC
+	, ORDER_DETAIL   OD    ; DSN
+	, ORDER_ACTION   OA
+	, PRSNL   P
+	, ENCNTR_ALIAS   EA
+;	, PERSON   PER
+	, PRSNL   P2
+	, ORDER_DETAIL   OD2   ; SCORE
+	, ENCOUNTER   E
+	, ORDER_DETAIL   OD3   ; AUC MOD
+	, ORDER_DETAIL   OD4   ; G CODE
+
+PLAN O
+
+  WHERE O.orig_order_dt_tm BETWEEN CNVTDATETIME("24-AUG-2020 00:30:00.00") and CNVTDATETIME("31-AUG-2020 23:59:59.00")  
+;UPDATE ;DATES
+
+  JOIN OC WHERE O.catalog_cd = oc.catalog_cd
+    and OC.activity_subtype_cd in ;VERIFY ACTIVITY SUBTYPES
+    
+    (
+    value(uar_get_code_by("MEANING",5801,"MRI"))
+    , value(uar_get_code_by("MEANING",5801,"MR"))
+    , value(uar_get_code_by("MEANING",5801,"CT"))
+    , value(uar_get_code_by("MEANING",5801,"NM"))
+    , value(uar_get_code_by("MEANING",5801,"PT"))
+    , value(uar_get_code_by("MEANING",5801,"PET"))
+    , value(uar_get_code_by("MEANING",5801,"NUCMED"))
+    )  
+
+  JOIN OD WHERE outerjoin(O.order_id) = od.order_id 
+    and od.oe_field_id = outerjoin(2834950121) ;DSN
+    ;and od.oe_field_display_value = NULL ;ONLY BRING BACK MISSING DSN ;COMMENT OUT FOR ALL
+
+
+  JOIN OA WHERE O.order_id = oa.order_id 
+    and oa.action_type_cd in (
+     2534
+)  ;ORDER_ACTION ;COMMENT OUT FOR ALL
+
+  JOIN P WHERE OA.order_provider_id = p.person_id
+
+  JOIN EA WHERE outerjoin(O.originating_encntr_id) = EA.encntr_id
+    and ea.encntr_alias_type_cd = outerjoin(1077) ;CLIENT FIN ID
+    ;and ea.alias = "zzzzzzzz" ;if searching by FIN
+
+;  JOIN PER WHERE O.person_id = PER.person_id
+
+  JOIN P2 WHERE oa.action_personnel_id = p2.person_id
+
+  JOIN OD2 WHERE outerjoin (O.order_id) = od2.order_id
+    and od2.oe_field_id = outerjoin (2505813411) ;SCORE
+
+  JOIN E WHERE  o.originating_encntr_id = E.encntr_id
+
+  JOIN OD3 WHERE outerjoin (o.order_id) = OD3.order_id
+    and od3.OE_FIELD_MEANING_ID = outerjoin (6059) ;AUC MOD ;Do not update
+
+  JOIN OD4 WHERE outerjoin(O.order_id) = OD4.order_id
+    and OD4.OE_FIELD_MEANING_ID = outerjoin(6058)  ;G CODE ;Do not update
+
+ORDER BY
+	O.orig_order_dt_tm
+
+WITH MAXREC = 30000, NOCOUNTER, FORMAT, TIME = 600
