@@ -1,0 +1,38 @@
+SELECT DISTINCT
+    ORDER_CATALOG_DISP = O.ORDER_MNEMONIC
+    , ORDER_ID = O.order_id
+    , DATE_TIME = format(O.ORIG_ORDER_DT_TM,"mm/dd/yyyy hh:mm:ss")
+    , CATALOG_TYPE= UAR_GET_CODE_DISPLAY(OC.CATALOG_TYPE_CD)
+    , ACTIVITY_SUBTYPE = UAR_GET_CODE_DISPLAY(OC.ACTIVITY_SUBTYPE_CD)
+    , ENCNTR_TYPE_DISP = UAR_GET_CODE_DISPLAY(E.ENCNTR_TYPE_CD)
+    , ACTION_POS = UAR_GET_CODE_DISPLAY(P.position_cd)
+    , PROVIDER_POS = UAR_GET_CODE_DISPLAY(P2.position_cd)
+FROM
+    ORDERS   O
+    , ORDER_CATALOG   OC
+    , ORDER_ACTION   OA
+    , ENCOUNTER   E
+    , PRSNL   P
+    , PRSNL   P2
+PLAN OC
+    WHERE oc.catalog_type_cd = value(uar_get_code_by("MEANING",6000,"RADIOLOGY"))
+    and OC.activity_subtype_cd in ;VERIFY ACTIVITY SUBTYPES
+    (
+    value(uar_get_code_by("MEANING",5801,"MRI"))
+    , value(uar_get_code_by("MEANING",5801,"MR"))
+    , value(uar_get_code_by("MEANING",5801,"CT"))
+    , value(uar_get_code_by("MEANING",5801,"NM"))
+    , value(uar_get_code_by("MEANING",5801,"PT"))
+    , value(uar_get_code_by("MEANING",5801,"PET"))
+    , value(uar_get_code_by("MEANING",5801,"NUCMED"))
+    )  
+JOIN O  WHERE OC.catalog_cd = o.catalog_cd
+    AND O.orig_order_dt_tm BETWEEN CNVTDATETIME("01-JAN-2020 00:01:00.00") and CNVTDATETIME("01-SEP-2020 23:59:59.00");UPDATE;DATES
+JOIN OA WHERE O.order_id = oa.order_id 
+  and oa.action_type_cd = 2534 ;ORDER_ACTION ;COMMENT OUT FOR ALL
+JOIN E WHERE  o.originating_encntr_id = E.encntr_id
+  
+JOIN P WHERE OA.action_personnel_id = P.person_id
+  
+JOIN P2 WHERE OA.order_provider_id = p2.person_id
+WITH NOCOUNTER, SEPARATOR=" ", FORMAT, TIME = 600
