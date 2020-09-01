@@ -1,0 +1,63 @@
+SELECT DISTINCT
+	OP_CATALOG_DISP = UAR_GET_CODE_DISPLAY(OP.CATALOG_CD)
+	, OP.ENTERED_BY_PRSNL_ID
+	, ENTERED_BY_POSITION = UAR_GET_CODE_DISPLAY(P.position_cd)
+	, OA.action_personnel_id
+	, OA_ACTION_POS = UAR_GET_CODE_DISPLAY(P2.position_cd)
+	, OA_ACTION = UAR_GET_CODE_DISPLAY(OA.action_type_cd)
+	, OP.RESPONSIBLE_PRSNL_ID
+	, RESOLVED_BY_POS = UAR_GET_CODE_DISPLAY(P3.position_cd)
+	, OP.RESOLVED_BY_PRSNL_ID
+	, OP.SUPERVISING_PROVIDER_ID ;NOT NEEDED
+	, OP.RESOLVED_DT_TM
+	, OP_PROPOSED_ACTION_TYPE_DISP = UAR_GET_CODE_DISPLAY(OP.PROPOSED_ACTION_TYPE_CD)
+	, OP.PROPOSAL_TO_ACTION_SEQ
+	, OP_PROPOSAL_STATUS_DISP = UAR_GET_CODE_DISPLAY(OP.PROPOSAL_STATUS_CD)
+	, OP_PROPOSAL_SOURCE_TYPE_DISP = UAR_GET_CODE_DISPLAY(OP.PROPOSAL_SOURCE_TYPE_CD)
+	, OP.PROJECTED_ORDER_ID
+	, OP.PERSON_ID
+	, OP.ORIGINATING_ENCNTR_ID
+	, OP.ORDER_PROPOSAL_ID
+	, OP.ORDER_MNEMONIC
+	, OP.ORDER_ID
+	, OP.ORDERED_AS_MNEMONIC
+	, OP.ENCNTR_ID
+	, OP_COMMUNICATION_TYPE_DISP = UAR_GET_CODE_DISPLAY(OP.COMMUNICATION_TYPE_CD)
+	, OP.CREATED_DT_TM
+
+FROM
+	ORDER_PROPOSAL   OP
+	, ORDER_ACTION   OA
+	, PRSNL   P
+	, PRSNL   P2
+	, PRSNL   P3
+	, ORDER_CATALOG   OC
+
+PLAN OP
+
+WHERE OP.created_dt_tm BETWEEN CNVTDATETIME("01-JAN-2020 00:00:00.00") and CNVTDATETIME("31-AUG-2020 23:59:59.00")
+    and op.proposed_action_type_cd = 2534
+
+JOIN OA WHERE OP.projected_order_id = oa.order_id
+    and OA.action_type_cd = 2534
+
+JOIN P WHERE OP.entered_by_prsnl_id = p.person_id
+
+JOIN P2 WHERE OA.action_personnel_id = p2.person_id
+
+JOIN P3 WHERE OP.responsible_prsnl_id = P3.person_id
+
+JOIN OC WHERE OP.catalog_cd = oc.catalog_cd
+    and OC.CATALOG_TYPE_CD = value(uar_get_code_by("MEANING",6000,"RADIOLOGY")) 
+	and oc.activity_subtype_cd in
+    	(
+    	value(uar_get_code_by("MEANING",5801,"MR"))
+    	, value(uar_get_code_by("MEANING",5801,"CT"))
+    	, value(uar_get_code_by("MEANING",5801,"NM"))
+    	, value(uar_get_code_by("MEANING",5801,"PT"))
+    	, value(uar_get_code_by("MEANING",5801,"MRI"))
+    	, value(uar_get_code_by("MEANING",5801,"NUCMED"))
+    	, value(uar_get_code_by("MEANING",5801,"PET"))
+        )
+
+WITH NOCOUNTER, SEPARATOR=" ", FORMAT, TIME = 60
