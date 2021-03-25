@@ -1,0 +1,172 @@
+;TIFT_GA PROD
+
+
+SELECT DISTINCT
+	O.catalog_cd
+	, ORDER_NAME = UAR_GET_CODE_DISPLAY(O.CATALOG_CD)
+	, ORDER_ID = O.order_id
+	, ORDER_DATE = format(O.ORIG_ORDER_DT_TM,"mm/dd/yyyy")
+	, ORDER_TIMETIME = format(O.ORIG_ORDER_DT_TM,"hh:mm:ss")
+	, DSN = OD.oe_field_display_value
+	, SCORE = OD2.oe_field_display_value
+	, AUC_MOD = OD3.oe_field_display_value
+	, QCDSM_GCODE = OD4.oe_field_display_value
+	, ORDER_PROVIDER_POS = UAR_GET_CODE_DISPLAY(P.POSITION_CD)
+	, ORDER_PROVIDER_NAME = P.name_full_formatted
+	, ACTION_POS = UAR_GET_CODE_DISPLAY (P2.position_cd)
+	, ACTION_NAME = P2.name_full_formatted
+	, CATALOG_TYPE = UAR_GET_CODE_DISPLAY(OC.CATALOG_TYPE_CD)
+	, ACTIVITY_SUBTYPE_DISP = UAR_GET_CODE_DISPLAY(OC.ACTIVITY_SUBTYPE_CD)
+	, ENCNTR_FIN_CLASS = UAR_GET_CODE_DISPLAY(E.financial_class_cd)
+	, DEPT_STATUS = UAR_GET_CODE_DISPLAY (O.dept_status_cd)
+	, ORDER_STATUS = UAR_GET_CODE_DISPLAY (o.order_status_cd)
+	, FIN = EA.ALIAS
+	, PT_NAME = PER.name_full_formatted ;if patient name is needed
+	, ENCNTR_TYPE = UAR_GET_CODE_DISPLAY(E.ENCNTR_TYPE_CD)
+	, ENCNTR_TYPE_CLASS = UAR_GET_CODE_DISPLAY(E.ENCNTR_TYPE_CLASS_CD)
+	, LOC_FACILITY_DISP = UAR_GET_CODE_DISPLAY(E.LOC_FACILITY_CD)
+	, LOC_BUILDING_DISP = UAR_GET_CODE_DISPLAY(E.LOC_BUILDING_CD)
+	, LOC_NURSE_UNIT_DISP = UAR_GET_CODE_DISPLAY(E.LOC_NURSE_UNIT_CD)
+	, ACCESSION = ORAD.accession
+	, REPLACED_ORDER_ID = ORAD.replaced_order_id
+	, REPLACED_ORDER_NAME = UAR_GET_CODE_DISPLAY(O2.catalog_cd)
+	, POWERPLAN_NAME = PC.description
+	, RFE_FREETEXT = OD5.oe_field_display_value
+	, COMM_TYPE = UAR_GET_CODE_DISPLAY(OA.communication_type_cd)
+	, CHARGE_DATE = format(C.ACTIVITY_DT_TM,"mm/dd/yyyy")
+	, C_ACTIVITY_TYPE = UAR_GET_CODE_DISPLAY(C.ACTIVITY_TYPE_CD)
+	, CHARGE_DESC = c.charge_description
+	, C.CHARGE_ITEM_ID
+	, C_FIN_CLASS_DISP = UAR_GET_CODE_DISPLAY(C.FIN_CLASS_CD)
+	, C.HEALTH_PLAN_ID
+	, C.INTERFACE_FILE_ID
+	, C.ITEM_PRICE
+	, C.ITEM_QUANTITY
+	, C.ITEM_LIST_PRICE
+	, C.PAYOR_ID
+	, C.PERF_PHYS_ID
+	, C_POSTED_DISP = UAR_GET_CODE_DISPLAY(C.POSTED_CD)
+	, C_PRICING_STATUS_DISP = UAR_GET_CODE_DISPLAY(C.PRICING_STATUS_CD)
+	, C.PROCESS_FLG
+	, C.PROCESS_FLG
+	, C_PROVIDER_SPECIALTY_DISP = UAR_GET_CODE_DISPLAY(C.PROVIDER_SPECIALTY_CD)
+	, C.REF_PHYS_ID
+	, C.SERVICE_DT_TM
+	, C_SUSPENSE_RSN_DISP = UAR_GET_CODE_DISPLAY(C.SUSPENSE_RSN_CD)
+	, C_TIER_GROUP_DISP = UAR_GET_CODE_DISPLAY(C.TIER_GROUP_CD)
+	, BC_SCHED_TYPE = substring(1,10,uar_geT_code_meaning(cm.field1_id))
+	, BC_SCHED = substring(1,30,uar_get_code_display(cm.field1_id))
+	, SCHED_CD = cm.field1_id
+	, BILL_CODE = substring(1,12,cm.field6)
+	, PRIORITY = cm.field2_id
+	, QCF = cm.cm1_nbr
+	, BC_DESC = cm.field7
+	, NOMENCLATURE_ID = cm.nomen_id
+	, CODE_VALUE = cm.field3_id
+	, CM_ACTIVE_STATUS_DISP = UAR_GET_CODE_DISPLAY(CM.ACTIVE_STATUS_CD)
+	, CM_CHARGE_MOD_TYPE_DISP = UAR_GET_CODE_DISPLAY(CM.CHARGE_MOD_TYPE_CD)
+	, CM_CODE1_DISP = UAR_GET_CODE_DISPLAY(CM.CODE1_CD)
+
+FROM
+	ORDERS   O
+	, ORDER_CATALOG   OC
+	, ORDER_DETAIL   OD ; DSN
+	, ORDER_ACTION   OA
+	, PRSNL   P
+	, ENCNTR_ALIAS   EA
+	, PERSON   PER
+	, PRSNL   P2
+	, ORDER_DETAIL   OD2 ; SCORE
+	, ENCOUNTER   E
+	, ORDER_DETAIL   OD3 ; AUC MOD
+	, ORDER_DETAIL   OD4 ; G CODE
+	, ORDER_RADIOLOGY   ORAD
+	, PATHWAY_CATALOG   PC
+	, ORDER_DETAIL   OD5 ; RFE_FT
+; , ORDER_DETAIL OD6 ;RFE_DCP
+	, ORDERS   O2
+	, CHARGE_MOD   CM
+	, CHARGE   C
+
+PLAN O
+
+ WHERE O.orig_order_dt_tm
+BETWEEN CNVTDATETIME("01-DEC-2020 08:00:00.00");UPDT START
+and CNVTDATETIME("03-DEC-2020 23:59:59.00") ;UPDT END
+
+ JOIN OC WHERE O.catalog_cd = oc.catalog_cd
+and OC.activity_subtype_cd in ;VERIFY ACTIVITY SUBTYPES
+(
+value(uar_get_code_by("MEANING",5801,"MRI"))
+, value(uar_get_code_by("MEANING",5801,"MR"))
+, value(uar_get_code_by("MEANING",5801,"CT"))
+, value(uar_get_code_by("MEANING",5801,"NM"))
+, value(uar_get_code_by("MEANING",5801,"PT"))
+, value(uar_get_code_by("MEANING",5801,"PET"))
+, value(uar_get_code_by("MEANING",5801,"NUCMED"))
+)
+
+ JOIN OD WHERE outerjoin(O.order_id) = od.order_id
+and od.oe_field_id = outerjoin(2998858973.00) ;DSN
+;and od.oe_field_display_value = NULL ;ONLY BRING BACK MISSING DSN ;COMMENT OUT FOR ALL
+
+JOIN OA WHERE O.order_id = oa.order_id
+and oa.action_type_cd in (
+value(uar_get_code_by("MEANING",6003,"ORDER"))
+) ;ORDER_ACTION ;COMMENT OUT FOR ALL
+
+ JOIN P WHERE OA.order_provider_id = p.person_id
+
+ JOIN EA WHERE outerjoin(O.originating_encntr_id) = EA.encntr_id
+and ea.encntr_alias_type_cd = outerjoin(1077) ;CLIENT FIN ID
+;and ea.alias = "zzzzzzzz" ;if searching by FIN
+
+ JOIN PER WHERE O.person_id = PER.person_id
+
+ JOIN P2 WHERE oa.action_personnel_id = p2.person_id
+
+ JOIN OD2 WHERE outerjoin (O.order_id) = od2.order_id
+and od2.oe_field_id = outerjoin (2998859041.00) ;SCORE
+
+ JOIN E WHERE o.originating_encntr_id = E.encntr_id
+
+ JOIN OD3 WHERE outerjoin (o.order_id) = OD3.order_id
+and od3.OE_FIELD_MEANING_ID = outerjoin(6059) ;AUC MOD ;Do not update
+; and od3.oe_field_display_value = "MA"
+
+JOIN OD4 WHERE outerjoin(O.order_id) = OD4.order_id
+and OD4.OE_FIELD_MEANING_ID = outerjoin(6058) ;G CODE ;Do not update
+JOIN ORAD WHERE O.order_id = orad.order_id
+JOIN PC WHERE outerjoin(o.pathway_catalog_id) = pc.pathway_catalog_id
+JOIN OD5 WHERE O.order_id = OD5.order_id ;RFE FT
+and OD5.oe_field_id = 12683
+; JOIN OD6 WHERE outerjoin(o.order_id) = od6.order_id
+; and OD6.oe_field_id = outerjoin(12684)
+
+ JOIN O2 WHERE ORAD.replaced_order_id = O2.order_id
+ 
+ JOIN C WHERE outerjoin(O.order_id) = c.order_id
+ 
+ JOIN CM WHERE outerjoin(c.charge_item_id) = cm.charge_item_id
+ AND CM.field1_id 
+ in
+ (
+ 615214
+ , 3692
+ )
+ ;AND CM.field1_id = value(uar_get_code_by("CDF_MEANING",14002,"MODIFIER")) ;Find out how to variable in CPT modifier and CPT code
+ ; purpose of this join is the show the exam's CPT code and the AUC modifier for compliance auditing
+ ; how needed is this becaue the values reside on order_detail?
+ ; we are showing all charges related to the order instead of only the AUC related values
+ 
+ ; alternative charge detail lookup could be based on the G code orderable name and the CPT of the order
+ 
+and cm.field6
+in
+("M*"
+,"7*" ; Can list discrete CPTs if needed
+)
+ORDER BY
+	O.orig_order_dt_tm
+
+WITH MAXREC = 30000, NOCOUNTER, FORMAT, TIME = 60Task 
