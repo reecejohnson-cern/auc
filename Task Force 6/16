@@ -1,0 +1,175 @@
+SELECT DISTINCT	
+	O.catalog_cd
+	, ORDER_NAME = UAR_GET_CODE_DISPLAY(O.CATALOG_CD)
+	, ORDER_ID = O.order_id
+	, ORDER_DATE = format(O.ORIG_ORDER_DT_TM,"mm/dd/yyyy")
+	, ORDER_TIMETIME = format(O.ORIG_ORDER_DT_TM,"hh:mm:ss")
+	, DSN = OD.oe_field_display_value
+	, SCORE = OD2.oe_field_display_value
+	, AUC_MOD = OD3.oe_field_display_value
+	, QCDSM_GCODE = OD4.oe_field_display_value
+	, ORDER_PROVIDER_POS = UAR_GET_CODE_DISPLAY(P.POSITION_CD)
+	, ORDER_PROVIDER_NAME = P.name_full_formatted
+	, ACTION_POS = UAR_GET_CODE_DISPLAY (P2.position_cd)
+	, ACTION_NAME = P2.name_full_formatted
+	, CATALOG_TYPE = UAR_GET_CODE_DISPLAY(OC.CATALOG_TYPE_CD)
+	, ACTIVITY_SUBTYPE_DISP = UAR_GET_CODE_DISPLAY(OC.ACTIVITY_SUBTYPE_CD)
+	, ENCNTR_FIN_CLASS = UAR_GET_CODE_DISPLAY(E.financial_class_cd);
+	, DEPT_STATUS = UAR_GET_CODE_DISPLAY (o.dept_status_cd)
+	, ORDER_STATUS = UAR_GET_CODE_DISPLAY (o.order_status_cd)
+	, FIN = EA.ALIAS
+	, PT_NAME = PER.name_full_formatted ;if patient name is needed
+	, ENCNTR_TYPE = UAR_GET_CODE_DISPLAY(E.ENCNTR_TYPE_CD)
+	, ENCNTR_TYPE_CLASS = UAR_GET_CODE_DISPLAY(E.ENCNTR_TYPE_CLASS_CD)
+	, LOC_FACILITY_DISP = UAR_GET_CODE_DISPLAY(E.LOC_FACILITY_CD)
+	, LOC_BUILDING_DISP = UAR_GET_CODE_DISPLAY(E.LOC_BUILDING_CD)
+	, LOC_NURSE_UNIT_DISP = UAR_GET_CODE_DISPLAY(E.LOC_NURSE_UNIT_CD)
+	, ACCESSION = ORAD.accession
+	, REPLACED_ORDER_ID = ORAD.replaced_order_id
+	, REPLACED_ORDER_NAME = UAR_GET_CODE_DISPLAY(O2.catalog_cd)
+	, POWERPLAN_NAME = PC.description
+	, RFE_FREETEXT = OD5.oe_field_display_value
+	, COMM_TYPE = UAR_GET_CODE_DISPLAY(OA.communication_type_cd)
+	, CHARGE_DATE = format(C.ACTIVITY_DT_TM,"mm/dd/yyyy")
+	, C_ACTIVITY_TYPE = UAR_GET_CODE_DISPLAY(C.ACTIVITY_TYPE_CD)
+	, CHARGE_DESC = c.charge_description
+	, C.CHARGE_ITEM_ID
+	, FIN_CLASS_CHARGE = UAR_GET_CODE_DISPLAY(C.FIN_CLASS_CD)
+	, C.HEALTH_PLAN_ID
+	, C.INTERFACE_FILE_ID
+	, ITEM_PRICE = C.ITEM_PRICE
+	, C.ITEM_QUANTITY
+	, ITEM_EXTENDED_PRICE = C.ITEM_EXTENDED_PRICE
+	, ITEM_LIST_PRICE = C.ITEM_LIST_PRICE
+	, C.PAYOR_ID
+	, C.PERF_PHYS_ID
+	, C_POSTED_DISP = UAR_GET_CODE_DISPLAY(C.POSTED_CD)
+	, C_PRICING_STATUS_DISP = UAR_GET_CODE_DISPLAY(C.PRICING_STATUS_CD)
+	, C_PROVIDER_SPECIALTY_DISP = UAR_GET_CODE_DISPLAY(C.PROVIDER_SPECIALTY_CD)
+	, REF_PHYS_ID = C.REF_PHYS_ID
+	, SERVICE_DT_TM = C.SERVICE_DT_TM
+	, C_SUSPENSE_RSN_DISP = UAR_GET_CODE_DISPLAY(C.SUSPENSE_RSN_CD)
+	, C_TIER_GROUP_DISP = UAR_GET_CODE_DISPLAY(C.TIER_GROUP_CD)
+;	, BC_SCHED_TYPE = substring(1,10,uar_geT_code_meaning(cm.field1_id))
+;	, CM.field1_id
+;	, BC_SCHED = substring(1,30,uar_get_code_display(cm.field1_id))
+;	, SCHED_CD = cm.field1_id
+;	, BILL_CODE = substring(1,12,cm.field6)
+;	, PRIORITY = cm.field2_id
+;	, QCF = cm.cm1_nbr
+;	, BC_DESC = cm.field7
+;	, NOMENCLATURE_ID = cm.nomen_id
+;	, CODE_VALUE = cm.field3_id
+;	, CM_ACTIVE_STATUS_DISP = UAR_GET_CODE_DISPLAY(CM.ACTIVE_STATUS_CD)
+;	, CM_CHARGE_MOD_TYPE_DISP = UAR_GET_CODE_DISPLAY(CM.CHARGE_MOD_TYPE_CD)
+;	, CM_CODE1_DISP = UAR_GET_CODE_DISPLAY(CM.CODE1_CD)
+;	, BC_SCHED_TYPE = substring(1,10,uar_geT_code_meaning(CM2.field1_id))
+;	, BC_SCHED = substring(1,30,uar_get_code_display(CM2.field1_id))
+;	, SCHED_CD = CM2.field1_id
+;	, BILL_CODE = substring(1,12,CM2.field6)
+;	, PRIORITY = CM2.field2_id
+;	, QCF = CM2.cm1_nbr
+;	, BC_DESC = CM2.field7
+;	, NOMENCLATURE_ID = CM2.nomen_id
+;	, CODE_VALUE = CM2.field3_id
+;	, CM_ACTIVE_STATUS_DISP = UAR_GET_CODE_DISPLAY(CM2.ACTIVE_STATUS_CD)
+;	, CM_CHARGE_MOD_TYPE_DISP = UAR_GET_CODE_DISPLAY(CM2.CHARGE_MOD_TYPE_CD)
+;	, CM_CODE1_DISP = UAR_GET_CODE_DISPLAY(CM2.CODE1_CD)
+;	, CM3.*
+	
+FROM	
+	ORDER_CATALOG   OC
+	, ORDERS   O
+	, ORDER_DETAIL   OD ; DSN
+	, ORDER_ACTION   OA
+	, PRSNL   P
+	, ENCNTR_ALIAS   EA
+	, PERSON   PER
+	, PRSNL   P2
+	, ORDER_DETAIL   OD2 ; SCORE
+	, ENCOUNTER   E
+	, ORDER_DETAIL   OD3 ; AUC MOD
+	, ORDER_DETAIL   OD4 ; G CODE
+	, ORDER_RADIOLOGY   ORAD
+	, PATHWAY_CATALOG   PC
+	, ORDER_DETAIL   OD5 ; RFE_FT
+    ; , ORDER_DETAIL OD6 ;RFE_DCP	
+	, ORDERS   O2
+	, CHARGE   C
+	
+;	, CHARGE_MOD   CM
+;	, CHARGE_MOD   CM2
+;	, CHARGE_MOD   CM3
+PLAN OC	
+WHERE OC.activity_subtype_cd in ;VERIFY ACTIVITY SUBTYPES	
+    (	
+    value(uar_get_code_by("MEANING",5801,"MRI"))	
+    , value(uar_get_code_by("MEANING",5801,"MR"))	
+    , value(uar_get_code_by("MEANING",5801,"CT"))	
+    , value(uar_get_code_by("MEANING",5801,"NM"))	
+    , value(uar_get_code_by("MEANING",5801,"PT"))	
+    , value(uar_get_code_by("MEANING",5801,"PET"))	
+    , value(uar_get_code_by("MEANING",5801,"NUCMED"))	
+    )	
+    and oc.active_ind = 1	
+JOIN O WHERE OC.catalog_cd = O.catalog_cd	
+    and o.activity_type_cd = value(uar_get_code_by("MEANING",106,"RADIOLOGY"))	
+    AND O.orig_order_dt_tm	
+    BETWEEN CNVTDATETIME("07-JUN-2021 00:00:01.00");UPDT START	
+    and CNVTDATETIME("16-JUN-2021 23:59:59.00") ;UPDT END	
+JOIN OD WHERE outerjoin(O.order_id) = od.order_id	
+    and od.oe_field_id =   outerjoin(2555663085.00)	
+    ; = outerjoin(196440747) ;DSN	
+;and od.oe_field_display_value = NULL ;ONLY BRING BACK MISSING DSN ;COMMENT OUT FOR ALL	
+JOIN OA WHERE O.order_id = oa.order_id	
+    and oa.action_type_cd = value(uar_get_code_by("MEANING",6003,"ORDER"))	
+JOIN P WHERE OA.order_provider_id = p.person_id	
+JOIN EA WHERE outerjoin(O.originating_encntr_id) = EA.encntr_id	
+    and ea.encntr_alias_type_cd = outerjoin(1077)	
+;1077; value(uar_get_code_by("DISPLAY_KEY",319,"FINNBR");CLIENT FIN ID	
+;and ea.alias = "zzzzzzzz" ;if searching by FIN	
+JOIN PER WHERE O.person_id = PER.person_id	
+JOIN P2 WHERE oa.action_personnel_id = p2.person_id	
+JOIN OD2 WHERE outerjoin (O.order_id) = od2.order_id	
+    and od2.oe_field_id =  outerjoin(2794744425.00)	
+JOIN E WHERE o.originating_encntr_id = E.encntr_id	
+JOIN OD3 WHERE outerjoin (o.order_id) = OD3.order_id	
+    and od3.OE_FIELD_MEANING_ID = outerjoin(6059) ;AUC MOD ;Do not update	
+; and od3.oe_field_display_value = "MA"	
+JOIN OD4 WHERE outerjoin(O.order_id) = OD4.order_id	
+    and OD4.OE_FIELD_MEANING_ID = outerjoin(6058) ;G CODE ;Do not update	
+JOIN ORAD WHERE O.order_id = orad.order_id	
+JOIN PC WHERE outerjoin(o.pathway_catalog_id) = pc.pathway_catalog_id	
+JOIN OD5 WHERE O.order_id = OD5.order_id ;RFE FT	
+    and OD5.oe_field_id =  12683.00	
+; JOIN OD6 WHERE outerjoin(o.order_id) = od6.order_id	
+; and OD6.oe_field_id = outerjoin(12684)	
+JOIN O2 WHERE ORAD.replaced_order_id = O2.order_id	
+JOIN C WHERE outerjoin(O.order_id) = c.order_id	
+    and c.offset_charge_item_id = outerjoin(0)	
+;JOIN CM WHERE outerjoin(c.charge_item_id) = cm.charge_item_id	
+;    and cm.field1_id in 	
+;    (select cv.code_value from code_value cv where cv.code_set = 14002	
+;    and cv.cdf_meaning = "CPT4")	
+;JOIN CM2 WHERE outerjoin(c.charge_item_id) = cm2.charge_item_id	
+;    and cm2.field1_id in 	
+;    (select cv2.code_value from code_value cv2 where cv2.code_set = 14002	
+;    and cv2.cdf_meaning = "MODIFIER")	
+;join cm3 where outerjoin(c.order_id) =  cnvtreal(cm3.field7)	
+;and cm3.field6 = outerjoin("USERDEFINEFIELD")	
+	
+    ;and cm3.field1_id in (select cm.field6 from charge_mod cm, orders o where cm.field7 = o.order_id)	
+    	
+    	
+    ;(select cv.code_value from code_value cv where cv.code_set = 14002	
+    ;and cv.cdf_meaning = "HCPCS")	
+    ;   and cm3.field1 = "USERDEFINED"	
+    	
+    	
+    ;And cm3.field1 in (select cv.code_value from code_value cv where cv.code_set = 14002	
+    ;and cv.cdf_meaning = "USERDEFINED")	
+	
+ORDER BY	
+	O.orig_order_dt_tm
+	
+WITH NOCOUNTER, FORMAT, TIME = 600	
